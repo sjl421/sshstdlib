@@ -1,0 +1,12 @@
+language: python
+python:
+ - "2.6"
+ - "2.7"
+
+install: 
+ - sudo apt-get install lsh-server
+ - python -c "import sys; sys.exit(sys.version<(2,7))" || pip install unittest2
+ - python setup.py install
+
+script: 
+ - nosetests -v -s src/
