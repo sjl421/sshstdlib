@@ -38,15 +38,13 @@ class RemotePython(object):
                 sys.stderr.write(self.client.get_stderr())
             raise
 
-    def _read_result(self, before_exc=None):
+    def _read_result(self):
         result_code, length_length = self._get_bytes(2)
         length = int(self._get_bytes(ord(length_length)))
         payload = pickle.loads(self._get_bytes(length))
         if result_code == "e":
             exc, tb = payload
-            if before_exc is not None:
-                sys.stderr.write(before_exc + "\n")
-            sys.stderr.write(tb)
+            exc.remote_traceback = tb
             raise exc
         elif result_code == "o":
             if length > 0:
@@ -54,7 +52,7 @@ class RemotePython(object):
 
     def evaluate(self, code):
         self._send_command("v", code)
-        return self._read_result("Evaluating: %s" % code)
+        return self._read_result()
 
     def execute(self, code):
         self._send_command("x", code)
