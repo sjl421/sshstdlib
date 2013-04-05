@@ -43,7 +43,7 @@ Out[4]: False
 Documentation
 =============
 
-*Most of the sshstdlib functionality is designed to match system library behaviour, so shall not be explicitly documented here.*
+API Documentation can be found here: https://sshstdlib.readthedocs.org/en/latest/index.html
 
 Notes
 =====
