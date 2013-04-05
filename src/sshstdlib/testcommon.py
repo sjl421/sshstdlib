@@ -28,6 +28,7 @@ class ServerBasedTest(fin.testing.TestCase):
         testing_root = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "testing"))
         key_file = os.path.join(testing_root, "lsh_key")
         seed_file = os.path.join(testing_root, "yarrow_seed")
+        os.chmod(seed_file, 0600)
         dummy_askpass = os.path.join(testing_root, "dummy_askpass")
         env = os.environ.copy()
         env["LSH_YARROW_SEED_FILE"] = seed_file
