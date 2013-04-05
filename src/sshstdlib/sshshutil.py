@@ -10,7 +10,7 @@ import sshstdlib.client
 import sshstdlib.library
 
 
-def auto_remote(fun):
+def _auto_remote(fun):
     @functools.wraps(fun)
     def wrap(self, *args, **kwargs):
         if any([isinstance(a, Shutil.Local) for a in (args + tuple(kwargs.values()))]):
@@ -22,19 +22,26 @@ def auto_remote(fun):
 
 class Shutil(sshstdlib.library.Library):
 
+    __doc__ = shutil.__doc__
     _MODULE_NAME = "shutil"
 
-    class Local(str): pass
+    class Local(str): 
+        """:obj:`str` subclass, passing :samp:`Local("{/path/to/..}")` to any shutil function
+        will make it read the path from the local filesystem
+        """
+        pass
 
     def _get_os(self, path):
         if isinstance(path, self.Local):
             return os
         return self._ssh.os
 
+    @functools.wraps(shutil.copyfileobj)
     def copyfileobj(self, *args, **kwargs):
         return shutil.copyfileobj(*args, **kwargs)
 
-    @auto_remote
+    @functools.wraps(shutil.copyfile)
+    @_auto_remote
     def copyfile(self, src, dst):
         if isinstance(src, self.Local):
             src_fo = open(src, "rb")
@@ -46,12 +53,14 @@ class Shutil(sshstdlib.library.Library):
             dst_fo = self._ssh.sftp.open(dst, "wb")
         return self.copyfileobj(src_fo, dst_fo)
 
-    @auto_remote
+    @functools.wraps(shutil.copymode)
+    @_auto_remote
     def copymode(self, src, dst):
         src_stat = self._get_os(src).stat(src)
         self._get_os(dst).chmod(dst, src_stat.st_mode)
 
-    @auto_remote
+    @functools.wraps(shutil.copystat)
+    @_auto_remote
     def copystat(self, src, dst):
         src_stat = self._get_os(src).stat(src)
         dst_os = self._get_os(dst)
@@ -61,7 +70,8 @@ class Shutil(sshstdlib.library.Library):
         if hasattr(src_stat, "st_flags"):
             dst_os.chflags(dst, src_stat.st_flags)
 
-    @auto_remote
+    @functools.wraps(shutil.copy)
+    @_auto_remote
     def copy(self, src, dst):
         src_os = self._get_os(src)
         dst_os = self._get_os(dst)
@@ -71,15 +81,17 @@ class Shutil(sshstdlib.library.Library):
         self.copymode(src, dst)
         return dst
 
-    @auto_remote
+    @functools.wraps(shutil.copy2)
+    @_auto_remote
     def copy2(self, src, dst):
         dst = self.copy(src, dst)
         self.copystat(src, dst)
 
     ignore_patterns = shutil.ignore_patterns
 
-    @auto_remote
+    @_auto_remote
     def copytree(self, src, dst, symlinks=False):
+        """ Emulates shutil.copytree, but doesn't implement the :obj:`ignore` callback"""
         src_os = self._get_os(src)
         tag_src = type(src)
         dst_os = self._get_os(dst)

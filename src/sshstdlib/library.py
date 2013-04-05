@@ -1,8 +1,13 @@
-import fin.cache
+import functools
 
-def proxy_fn(name):
+import fin.cache
+import fin.module
+
+
+def proxy_fn(name, wrap_fn=None):
     def wrapper(self, *args, **kwargs):
         return self._runner.evaluate("%s.%s(*%r, **%r)" % (self._MODULE_NAME, name, args, kwargs))
+    wrapper.__doc__ = getattr(wrap_fn, "__doc__", None)
     return wrapper
 
 
@@ -13,16 +18,17 @@ class Library(object):
     _PROXY_FUNCS_LOADED = False
 
     @classmethod
-    def load_funcs(cls):
+    def LOAD_FUNCS(cls):
+        mod = fin.module.import_module_by_name_parts(*cls._MODULE_NAME.split("."))
         if cls._PROXY_FUNCS_LOADED:
             return
         for func_name in cls._PROXY_FUNCS:
-            setattr(cls, func_name, proxy_fn(func_name))
+            func = proxy_fn(func_name, wrap_fn=getattr(mod, func_name, None))
+            setattr(cls, func_name, func)
         cls._PROXY_FUNCS_LOADED = True
 
     def __init__(self, ssh):
         self._ssh = ssh
-        self.load_funcs()
 
     @fin.cache.property
     def _runner(self):

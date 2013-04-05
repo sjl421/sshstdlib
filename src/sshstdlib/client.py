@@ -58,7 +58,16 @@ def add_contextmanager(file_ob):
 class Client(object):
 
     """A simplified SSH Client interface, with a focus on successfully
-        connecting within a trusted environment, loosely based on paramiko.SSHCLient"""
+        connecting within a trusted environment, loosely based on paramiko.SSHClient
+
+        :param transport: A valid Transport object (usually obtained by calling 
+                          `get_tranport` on a connected paramiko client object)
+        :type transport: :py:class:`paramiko.transport.Transport`
+        :param timeout: If not :keyword:`None`, establishes a secondary channel to monitor the ssh connection.  
+                        If a remote call blocks for timeout seconds, a heartbeat is sent over the secondary channel, 
+                        if the heartbeat doesn't return within timeout seconds, raises an exception.
+        :type timeout: int / :keyword:`None`
+    """
 
     def __init__(self, transport, timeout=1):
         self.transport = transport
@@ -66,6 +75,26 @@ class Client(object):
 
     @classmethod
     def connect(cls, *args, **kwargs):
+        """Set up an SSH session, and bind it to the client.
+            All arguments (except :py:obj:`no_keys`) are passed directly 
+            to :py:meth:`paramiko.client.SSHClient.connect`
+
+            :param hostname: The server to connect to
+            :type hostname: str
+            :param port: The server port to connect to (default=22)
+            :type port: int
+            :param username: the username to authenticate as (defaults to the
+                             current local username)
+            :type username: str
+            :param password: a password to use for authentication or for unlocking
+                             a private key
+            :type password: str
+            :param pkey: an optional private key to use for authentication
+            :type pkey: :py:class:`paramiko.pkey.PKey`
+            :param others: See paramiko documentation
+            :type others: kwargs
+            :rtype: :class:`Client`
+        """
         ssh = paramiko.client.SSHClient()        
         if "no_keys" in kwargs:
             no_keys = kwargs.pop("no_keys")
@@ -79,6 +108,23 @@ class Client(object):
         return instance
 
     def Popen(self, cmd, *args, **kwargs):
+        """Loosely modelled on the subprocess.Popen interface. 
+            Runs `cmd [args...]` on remote machine.  The returned object
+            can be read from, written to, and has some methods that are a bit
+            similar to the standard Popen object.
+
+            :param cmd: the executable to run
+            :type cmd: str
+            :param \*args: string arguments to pass to cmd
+            :type cmd: list of strings
+            :param shell: (Default: :py:obj:`False`) call the command from a new :command:`/bin/bash` instance.
+            :type shell: :py:class:`bool`
+            :param env: (Default: :py:obj:`{}`) Set all items in `env` as environment variables.
+                        *Note*: this inlines all variables using env KEY=VALUE KEY2=VALUE2... 
+                        so this may cause issues on some systems that have limits.
+            :type env: :py:class:`dict`
+            :rtype: :class:`sshstdlib.exec_channel.ExecChannel`
+            """
         shell = False
         env = None
         if "shell" in kwargs:
@@ -121,25 +167,31 @@ class Client(object):
 
     @fin.cache.property
     def os(self):
+        """ Emulated os module - :class:`sshstdlib.sshos.OS` """
         return sshstdlib.sshos.OS(self)
 
     @fin.cache.property
     def shutil(self):
+        """ Emulated shutil module - :class:`sshstdlib.sshshutil.Shutil` """
         import sshstdlib.sshshutil
         return sshstdlib.sshshutil.Shutil(self)
 
     @fin.cache.property
     def tempfile(self):
+        """ Emulated tempfile module - :class:`sshstdlib.sshtempfile.TempFile` """
         import sshstdlib.sshtempfile
         return sshstdlib.sshtempfile.TempFile(self)
 
     @fin.cache.property
     def sftp(self):
+        """An opened paramiko sftp channel (created on first use). Intended for internal use"""
         return self.transport.open_sftp_client()
 
     @fin.cache.property
     def python(self):
+        """A :class:`sshstdlib.remote.RemotePython` instance (created on first use). Intended for internal use"""
         return sshstdlib.remote.RemotePython(self)
 
     def open(self, name, mode="rb"):
+        """Similar to the :obj:`open` builtin"""
         return add_contextmanager(self.sftp.open(name, mode=mode))

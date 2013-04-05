@@ -114,6 +114,7 @@ class OS(sshstdlib.library.Library):
     def path(self):
         return Path(self._ssh)
 
+OS.LOAD_FUNCS()
 
 class Path(sshstdlib.library.Library):
 
@@ -150,3 +151,5 @@ class Path(sshstdlib.library.Library):
     @property
     def supports_unicode_filenames(self, *parts):
         return self._ssh.run_python("import os.path; out=os.path.supports_unicode_filenames")
+
+Path.LOAD_FUNCS()

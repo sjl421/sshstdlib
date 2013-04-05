@@ -10,6 +10,8 @@ Goals
 =====
 
 The ideal of sshstdlib is to provide a sensible, pragmatic subset of the python standard libraries.
+Largely, this is done by dynamically pushing and running a small python client to the box. :module:`sshstdlib.remote_client`.
+Some functionality uses the SSH sftp functionality, and some involves running commands directly using the ssh 'exec' channels.
 
 If functionality is missing from sshstdlib that is present in the python standard libraries, this is a 'missing feature'
 let us know if you need anything specific, or feel free to contribute implementations.
@@ -43,7 +45,7 @@ Documentation
 
 *Most of the sshstdlib functionality is designed to match system library behaviour, so shall not be explicitly documented here.*
 
-The Client
-----------
+Notes
+=====
 
-*sshstdlib.client* provides the main sshstdlib class: _Client_.
+Channels are set up only when required, so the python client is only pushed and run when the first call that requires is is made.  likewise with the sftp channel.  both the :attr:`python` and :attr:`sftp` channels are persisted once created for the lifetime of the client.
