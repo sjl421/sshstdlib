@@ -12,7 +12,7 @@ Example usage
 ```python
 In [1]: import sshstdlib.client
 
-In [2]: remote = sshstdlib.client.Client.connect("localhost", username="jenkins", password="Admin123", no_keys=True)
+In [2]: remote = sshstdlib.client.Client.connect("localhost", username="jenkins", password="XXXXXX", no_keys=True)
 
 In [3]: with remote.tempfile.NamedTemporaryFile() as fh:
    ...:     fh.write("hello world")
