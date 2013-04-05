@@ -1,4 +1,4 @@
-sshstdlib
+sshstdlib [![Build Status](https://travis-ci.org/stestagg/sshstdlib.png)](https://travis-ci.org/stestagg/sshstdlib)
 =========
 
 sshstdlib emulates the python standard libraries, operating over an SSH tunnel.
