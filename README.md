@@ -6,6 +6,19 @@ sshstdlib emulates the python standard libraries, operating over an SSH tunnel.
 It uses paramiko to set up an SSH session, and allows simple remote execution
 and familiar methods on the remote system.
 
+Goals
+=====
+
+The ideal of sshstdlib is to provide a sensible, pragmatic subset of the python standard libraries.
+
+If functionality is missing from sshstdlib that is present in the python standard libraries, this is a 'missing feature'
+let us know if you need anything specific, or feel free to contribute implementations.
+
+If sshstdlib behaviour differs in a meaningful way from the equivalent standard library functionality, this is a bug.
+Please submit it as such.
+
+Sometimes adding extra functionality makes sense.  This should be done in an unobtrusive manner, and be documented explicitly here.
+
 Example usage
 =============
 
@@ -24,3 +37,13 @@ In [4]: remote.os.path.exists("/tmp/tmpRthB9D")
 Out[4]: False
 
 ```
+
+Documentation
+=============
+
+*Most of the sshstdlib functionality is designed to match system library behaviour, so shall not be explicitly documented here.*
+
+The Client
+----------
+
+*sshstdlib.client* provides the main sshstdlib class: _Client_.
