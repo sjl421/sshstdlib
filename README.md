@@ -49,3 +49,4 @@ Notes
 =====
 
 Channels are set up only when required, so the python client is only pushed and run when the first call that requires is is made.  likewise with the sftp channel.  both the :attr:`python` and :attr:`sftp` channels are persisted once created for the lifetime of the client.
+
