@@ -82,8 +82,8 @@ class OS(sshstdlib.library.Library):
         "pathconf",
         "pipe",
         "readnames",
-        "read"
-        "readlink"
+        "read",
+        "readlink",
         "remove",
         "removedirs",
         "rename",

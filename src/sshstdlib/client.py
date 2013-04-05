@@ -9,10 +9,18 @@ import sys
 import socket
 import subprocess
 
+import paramiko.client
+
 import fin.cache
 import sshstdlib.remote
 import sshstdlib.sshos
 import sshstdlib.exec_channel
+
+
+class _IgnorePolicy(object):
+
+    def missing_host_key(self, *args, **kwargs):
+        return
 
 
 class CalledProcessError(subprocess.CalledProcessError): 
@@ -55,6 +63,20 @@ class Client(object):
     def __init__(self, transport, timeout=1):
         self.transport = transport
         self.timeout = timeout    
+
+    @classmethod
+    def connect(cls, *args, **kwargs):
+        ssh = paramiko.client.SSHClient()        
+        if "no_keys" in kwargs:
+            no_keys = kwargs.pop("no_keys")
+        if no_keys:
+            ssh.set_missing_host_key_policy(_IgnorePolicy())
+        else:
+            ssh.load_system_host_keys()
+        ssh.connect(*args, **kwargs)
+        instance = cls(ssh.get_transport())
+        instance._referenced_ssh = ssh
+        return instance
 
     def Popen(self, cmd, *args, **kwargs):
         shell = False
