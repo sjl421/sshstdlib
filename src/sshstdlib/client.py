@@ -71,7 +71,8 @@ class Client(object):
 
     def __init__(self, transport, timeout=1):
         self.transport = transport
-        self.timeout = timeout    
+        self._timeout = timeout
+        self.timeout = timeout
 
     @classmethod
     def connect(cls, *args, **kwargs):
@@ -106,6 +107,21 @@ class Client(object):
         instance = cls(ssh.get_transport())
         instance._referenced_ssh = ssh
         return instance
+
+    @property
+    def timeout(self):
+        return self._timeout
+    
+    @timeout.setter
+    def timeout(self, value):
+        self._timeout = value
+        if value is None:
+            cls = type(self)
+            if cls._ping_channel.has_cached(self):
+                self._ping_channel.close()
+                cls._ping_channel.reset(self)
+        else:
+            _ = self._ping_channel
 
     def Popen(self, cmd, *args, **kwargs):
         """Loosely modelled on the subprocess.Popen interface. 
@@ -165,6 +181,16 @@ class Client(object):
             return json.loads(stdout)
         return stdout
 
+    def ping(self):
+        if self.timeout is None:
+            return True
+        try:
+            self._ping_channel.write("ping\n")
+            data = self._ping_channel.read_exact(5)
+            assert data == "ping\n", "Received unexpected ping reply: %r" % (data, )
+        except socket.timeout:
+            return False
+
     @fin.cache.property
     def os(self):
         """ Emulated os module - :class:`sshstdlib.sshos.OS` """
@@ -191,6 +217,13 @@ class Client(object):
     def python(self):
         """A :class:`sshstdlib.remote.RemotePython` instance (created on first use). Intended for internal use"""
         return sshstdlib.remote.RemotePython(self)
+
+    @fin.cache.property
+    def _ping_channel(self):
+        """An object that can be used to check if a connection is still 'alive'."""
+        channel = sshstdlib.exec_channel.ExecChannel(self, _direct=True)
+        channel.start("cat")
+        return channel
 
     def open(self, name, mode="rb"):
         """Similar to the :obj:`open` builtin"""
