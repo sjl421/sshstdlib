@@ -1,2 +1,2 @@
-fin
+fin==1.3
 paramiko
