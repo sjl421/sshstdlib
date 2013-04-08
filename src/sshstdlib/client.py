@@ -96,7 +96,8 @@ class Client(object):
             :type others: kwargs
             :rtype: :class:`Client`
         """
-        ssh = paramiko.client.SSHClient()        
+        ssh = paramiko.client.SSHClient()
+        no_keys = False
         if "no_keys" in kwargs:
             no_keys = kwargs.pop("no_keys")
         if no_keys:
@@ -166,6 +167,9 @@ class Client(object):
     def check_call(self, cmd, *args, **kwargs):
         stdin = ""
         expect_json = False
+        silent = False
+        if "silent" in kwargs:
+            silent = kwargs.pop("silent")
         if "expect_json" in kwargs:
             expect_json = kwargs.pop("expect_json")
         if "stdin" in kwargs:
@@ -174,7 +178,8 @@ class Client(object):
         with self.Popen(cmd, *args, **kwargs) as exe:
             exit_code, stdout, stderr = exe.communicate(stdin)
 
-        sys.stderr.write(stderr)
+        if not silent:
+            sys.stderr.write(stderr)
         if exit_code != 0:
             raise CalledProcessError(exit_code, cmd)
         if expect_json:

@@ -4,6 +4,7 @@ import sys
 import fin
 
 import sshstdlib.remote_client
+import sshstdlib.client
 
 
 class RemotePython(object):
@@ -16,7 +17,11 @@ class RemotePython(object):
     def client(self):
         with open(sshstdlib.remote_client.__file__, "rb") as fh:
             client_code = fh.read()
-        tempfile = self._ssh.check_call("tempfile").strip()
+        try:
+            tempfile = self._ssh.check_call("tempfile", silent=True).strip()
+        except sshstdlib.client.CalledProcessError:
+             tempfile = self._ssh.check_call(
+                "/usr/bin/python", "-c", "import tempfile; _, p = tempfile.mkstemp(); print p").strip()
         self._ssh.check_call("/bin/cat", ">", tempfile, stdin=client_code, shell=True)
         return self._ssh.Popen("/usr/bin/python", "-u", tempfile)
 
