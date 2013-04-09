@@ -2,7 +2,18 @@ import cPickle as pickle
 import os
 import sys
 import traceback
-import tty
+
+
+_OBJECT_CACHE = {}
+
+
+def RemoteProxy(name, id):
+    return _OBJECT_CACHE[id]
+
+
+def restore_globals(context):
+    context["_OBJECT_CACHE"] = _OBJECT_CACHE
+    context["RemoteProxy"] = RemoteProxy
 
 
 def read_exact(n):
@@ -31,7 +42,8 @@ def main(args):
         os.unlink(__file__)
     context = {}
     while True:
-        action, length_length  = read_exact(2)
+        restore_globals(context)
+        action, length_length = read_exact(2)
         length = int(read_exact(ord(length_length)))
         payload = read_exact(length)
         if action == "v":

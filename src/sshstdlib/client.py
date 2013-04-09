@@ -1,7 +1,7 @@
 try:
     import cStringIO as StringIO
 except ImportError:
-    import StringIO
+    import StringIO  # NOQA
 
 import json
 import os
@@ -43,7 +43,7 @@ def get_python_cmd():
 
 
 def add_contextmanager(file_ob):
-    # Approach taken from: http://stackoverflow.com/questions/990758/reclassing-an-instance-in-python
+    # Derived from: http://stackoverflow.com/questions/990758/reclassing-an-instance-in-python
     class SFTPFile(file_ob.__class__):
 
         def __enter__(self):
@@ -63,8 +63,10 @@ class Client(object):
         :param transport: A valid Transport object (usually obtained by calling 
                           `get_tranport` on a connected paramiko client object)
         :type transport: :py:class:`paramiko.transport.Transport`
-        :param timeout: If not :keyword:`None`, establishes a secondary channel to monitor the ssh connection.  
-                        If a remote call blocks for timeout seconds, a heartbeat is sent over the secondary channel, 
+        :param timeout: If not :keyword:`None`, establishes a secondary channel to monitor the 
+                        ssh connection.  
+                        If a remote call blocks for timeout seconds, a heartbeat is sent over 
+                        the secondary channel, 
                         if the heartbeat doesn't return within timeout seconds, raises an exception.
         :type timeout: int / :keyword:`None`
     """
@@ -113,7 +115,7 @@ class Client(object):
     def timeout(self):
         return self._timeout
     
-    @timeout.setter
+    @timeout.setter  # NOQA
     def timeout(self, value):
         self._timeout = value
         if value is None:
@@ -122,7 +124,7 @@ class Client(object):
                 self._ping_channel.close()
                 cls._ping_channel.reset(self)
         else:
-            _ = self._ping_channel
+            _ = self._ping_channel  # NOQA
 
     def Popen(self, cmd, *args, **kwargs):
         """Loosely modelled on the subprocess.Popen interface. 
@@ -134,7 +136,8 @@ class Client(object):
             :type cmd: str
             :param \*args: string arguments to pass to cmd
             :type cmd: list of strings
-            :param shell: (Default: :py:obj:`False`) call the command from a new :command:`/bin/bash` instance.
+            :param shell: (Default: :py:obj:`False`) call the command from 
+                          a new :command:`/bin/bash` instance.
             :type shell: :py:class:`bool`
             :param env: (Default: :py:obj:`{}`) Set all items in `env` as environment variables.
                         *Note*: this inlines all variables using env KEY=VALUE KEY2=VALUE2... 
@@ -154,14 +157,15 @@ class Client(object):
                             % (kwargs.keys()[0], ))
         
         cmd = subprocess.list2cmdline((cmd, ) + args)
-
+        marker = None
         if shell:
-            cmd = "bash -c '%s'" % (cmd, )
+            marker = "__sshstdlib start__"
+            cmd = "bash -lc 'echo -n %s;%s'" % (marker, cmd, )
         if env is not None:
             cmd = "%s %s" % (make_env_cmd(env), cmd)
         
         channel = sshstdlib.exec_channel.ExecChannel(self)
-        channel.start(cmd)
+        channel.start(cmd, marker=marker)
         return channel
         
     def check_call(self, cmd, *args, **kwargs):
@@ -186,7 +190,13 @@ class Client(object):
             return json.loads(stdout)
         return stdout
 
+    @property
+    def active(self):
+        return self.transport.is_active()
+
     def ping(self):
+        if not self.active:
+            return False
         if self.timeout is None:
             return True
         try:
@@ -195,6 +205,7 @@ class Client(object):
             assert data == "ping\n", "Received unexpected ping reply: %r" % (data, )
         except socket.timeout:
             return False
+        return True
 
     @fin.cache.property
     def os(self):
@@ -214,13 +225,20 @@ class Client(object):
         return sshstdlib.sshtempfile.TempFile(self)
 
     @fin.cache.property
+    def urllib2(self):
+        """ Emulated urllib2 module - :class:`sshstdlib.sshurllib2.Urllib2` """
+        import sshstdlib.sshurllib2
+        return sshstdlib.sshurllib2.Urllib2(self)
+
+    @fin.cache.property
     def sftp(self):
         """An opened paramiko sftp channel (created on first use). Intended for internal use"""
         return self.transport.open_sftp_client()
 
     @fin.cache.property
     def python(self):
-        """A :class:`sshstdlib.remote.RemotePython` instance (created on first use). Intended for internal use"""
+        """A :class:`sshstdlib.remote.RemotePython` instance (created on first use). 
+           Intended for internal use"""
         return sshstdlib.remote.RemotePython(self)
 
     @fin.cache.property

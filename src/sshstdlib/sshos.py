@@ -1,40 +1,8 @@
-import subprocess
-import collections
 import os
-import posix
-import sys
-import itertools
 
 import fin.cache
-import json
 
 import sshstdlib.library
-
-proxy = sshstdlib.library.proxy_fn
-
-
-class RemoteEnviron(collections.MutableMapping):
-
-    def __init__(self, runner):
-        self._runner = runner
-
-    def __delitem__(self, name):
-        return self._runner.execute("del os.environ[%r]" % name)
-
-    def __setitem__(self, name, value):
-        return self._runner.execute("os.environ[%r] = %r" % (name, value))
-
-    def __getitem__(self, name):
-        return self._runner.evaluate("os.environ[%r]" % (name, ))
-
-    def __contains__(self, name):
-        return self._runner.evaluate("%r in os.environ" % (name, ))
-
-    def __iter__(self):
-        return iter(self._runner.evaluate("os.environ.keys()"))
-
-    def __len__(self):
-        return len(self._runner.evaluate("len(os.environ)"))
 
 
 class OS(sshstdlib.library.Library):
@@ -100,7 +68,8 @@ class OS(sshstdlib.library.Library):
         "write",
     ]
 
-    class error(os.error): pass
+    class error(os.error): 
+        pass
 
     @property
     def name(self):
@@ -108,13 +77,16 @@ class OS(sshstdlib.library.Library):
 
     @fin.cache.property
     def environ(self):
-        return RemoteEnviron(self._runner)
+        # doing this ensures that os is imported
+        _ = self._runner  # NOQA 
+        return sshstdlib.library.RemoteDict(self._runner, "os.environ")
 
     @fin.cache.property
     def path(self):
         return Path(self._ssh)
 
 OS.LOAD_FUNCS()
+
 
 class Path(sshstdlib.library.Library):
 

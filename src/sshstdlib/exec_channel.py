@@ -2,9 +2,15 @@ import functools
 import socket
 
 
+class TransportNotActive(Exception):
+    pass
+
+
 def check_active_timeout(func):
     @functools.wraps(func)
     def wrapper(channel, *args, **kwargs):
+        if not channel.client.active:
+            raise TransportNotActive()
         if channel._direct:
             return func(channel, *args, **kwargs)
         if channel.exec_channel is not None:
@@ -23,11 +29,15 @@ class ExecChannel(object):
 
     def __init__(self, client, _direct=False):
         self._direct = _direct
+        self.command = None
         self.client = client
         self.exec_channel = None
 
     @check_active_timeout
-    def start(self, command):
+    def start(self, command, marker=None):
+        self.input_marker = marker
+        self._seen_marker = marker is None
+        self.command = command
         self.exec_channel = self.client.transport.open_session()
         self.exec_channel.settimeout(self.client.timeout)
         self.exec_channel.exec_command(command)
@@ -62,11 +72,26 @@ class ExecChannel(object):
             bytes_sent = self._send(data)
             data = data[bytes_sent:]
 
+    def read(self, n):
+        data = self._recv(n)
+        input_buffer = ""
+        while not self._seen_marker:
+            input_buffer += data
+            if self.input_marker in input_buffer:
+                self._seen_marker = True
+                data = input_buffer[input_buffer.index(self.input_marker) 
+                                    + len(self.input_marker):]
+            else:
+                data = self._recv(n)
+                if data == "":
+                    return ""
+        return data
+
     def read_exact(self, n):
         to_read = n
         data = ""
         while to_read:
-            read_bytes = self._recv(to_read)
+            read_bytes = self.read(to_read)
             if read_bytes == "":
                 raise Exception("EOF")
             data += read_bytes
@@ -90,8 +115,11 @@ class ExecChannel(object):
             self.write(data)
             self.close_stdin()
         exit_code = self.recv_exit_status()
+        prefix_stdout = ""
+        if self.input_marker:
+            prefix_stdout = self.read(1)
         return (exit_code, 
-                self.exec_channel.in_buffer.empty(), 
+                prefix_stdout + self.exec_channel.in_buffer.empty(), 
                 self.exec_channel.in_stderr_buffer.empty())
 
     def __enter__(self):
