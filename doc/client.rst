@@ -17,3 +17,4 @@ Implemented Modules:
    os
    tempfile
    shutil
+   subprocess
