@@ -4,9 +4,9 @@ import os
 from setuptools import setup, find_packages
 
 ROOT = os.path.abspath(os.path.dirname(__file__))
-fp = open(os.path.join(ROOT,"requirements.txt"))
-REQUIREMENTS = [r.strip() for r in fp.readlines()]
-fp.close()
+#fp = open(os.path.join(ROOT, "requirements.txt"))
+#REQUIREMENTS = [r.strip() for r in fp.readlines()]
+#fp.close()
 
 
 if __name__ == "__main__":
@@ -31,6 +31,9 @@ if __name__ == "__main__":
             'Programming Language :: Python',
         ],
 
-        install_requires=REQUIREMENTS
+        # Because paramiko is a primary requirement, and 
+        # that requires PyCrypto which is binary,
+        # For now, I'm disabling explicit requirements checking
+        #install_requires=REQUIREMENTS
 
     )
