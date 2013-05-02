@@ -1,7 +1,10 @@
 
 from __future__ import with_statement
 
-import fin
+import subprocess
+
+import fin.testing
+
 
 import sshstdlib.testcommon as testcommon
 import sshstdlib.library
@@ -10,6 +13,8 @@ import sshstdlib.library
 class SubprocessTest(testcommon.ServerBasedTest):
 
     def test_check_output(self):
+        if not hasattr(subprocess, "check_output"):
+            raise fin.testing.unittest.SkipTest("check_output not present")
         self.assertEqual(self.client.subprocess.check_output(["echo", "hi"]), "hi\n")
 
     def test_popen(self):
