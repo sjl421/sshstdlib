@@ -36,8 +36,8 @@ class RemotePython(object):
 
     @fin.cache.property
     def _executable(self):
-        candidates = ["python%s.%s" % (sys.version_info.major, sys.version_info.minor),
-                      "python%s" % (sys.version_info.major, ),
+        candidates = ["python%s.%s" % (sys.version_info[0], sys.version_info[1]),
+                      "python%s" % (sys.version_info[0], ),
                       "python"]
         proc = self._ssh.Popen("which", *candidates, shell=True)
         _, stdout, stderr = proc.communicate()
