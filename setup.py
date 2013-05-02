@@ -12,7 +12,7 @@ fp.close()
 if __name__ == "__main__":
     setup(
         name="sshstdlib",
-        version="1.0",
+        version="1.1",
         license="BSD",
 
         description="A standard library emulation layer over SSH",

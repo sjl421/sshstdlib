@@ -1,4 +1,5 @@
 import StringIO
+import pwd
 import os
 import socket
 import subprocess
@@ -58,7 +59,11 @@ class ServerBasedTest(fin.testing.TestCase):
                 sock.close()
                 break
         assert total_sleep > 0, "Timeout waiting for ssh to start"
-        self.ssh.connect("127.0.0.1", port=self.SSH_SERVER_PORT, username=os.getlogin(), 
+        try:
+            current_user = os.getlogin()
+        except OSError:
+            current_user = pwd.getpwuid(os.geteuid()).pw_name
+        self.ssh.connect("127.0.0.1", port=self.SSH_SERVER_PORT, username=current_user, 
                          password="none", allow_agent=False, look_for_keys=False)
         client = sshstdlib.client.Client(self.ssh.get_transport())
         client.timeout = None

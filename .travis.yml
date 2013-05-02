@@ -1,12 +1,8 @@
-language: python
-python:
- - "2.6"
- - "2.7"
+language: c
 
 install: 
- - sudo apt-get install lsh-server
- - python -c "import sys; sys.exit(sys.version<(2,7))" || pip install unittest2
- - python setup.py install
+ - sudo apt-get install gstreamer0.10-plugins-bad gstreamer0.10-ffmpeg libgstreamer0.10-dev
+ - make
 
 script: 
- - nosetests -v -s src/
+ - make check

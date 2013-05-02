@@ -65,9 +65,18 @@ def remote_ob_fn(name, wraps=None):
     return wrapper
 
 
-def remote_property(name, wraps=None):
-    def wrapper(self, *args, **kwargs):
-        return self._with_object(".%s" % (name, ))
+def remote_property(name, wraps=None, cache=None):
+    if cache is not None:
+        def wrapper(self, *args, **kwargs):
+            self._ssh.python.set_default(OBJECT_CACHE_NAME, {})
+            self._ssh.python.execute(
+                "result = %s[%i].%s" % (OBJECT_CACHE_NAME, self._id, name))
+            self._ssh.python.execute(
+                "%s[id(result)] = result" % (OBJECT_CACHE_NAME, ))
+            return cache(self._ssh, self._ssh.python.evaluate("id(result)"))
+    else:
+        def wrapper(self, *args, **kwargs):  # NOQA
+            return self._with_object(".%s" % (name, ))
     wrapper.__doc__ = getattr(wraps, "__doc__", None)
     return property(wrapper)
 

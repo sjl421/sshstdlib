@@ -231,6 +231,12 @@ class Client(object):
         return sshstdlib.sshurllib2.Urllib2(self)
 
     @fin.cache.property
+    def subprocess(self):
+        """ Emulated subprocess module - :class:`sshstdlib.sshsubprocess.Subprocess` """
+        import sshstdlib.sshsubprocess
+        return sshstdlib.sshsubprocess.Subprocess(self)
+
+    @fin.cache.property
     def sftp(self):
         """An opened paramiko sftp channel (created on first use). Intended for internal use"""
         return self.transport.open_sftp_client()
