@@ -1,10 +1,7 @@
 import functools
 import os
-import sys
 import shutil
 import stat
-
-import fin.cache
 
 import sshstdlib.client
 import sshstdlib.library
@@ -44,14 +41,12 @@ class Shutil(sshstdlib.library.Library):
     @_auto_remote
     def copyfile(self, src, dst):
         if isinstance(src, self.Local):
-            src_fo = open(src, "rb")
+            if isinstance(dst, self.Local):
+                return shutil.copyfile(src, dst)
+            else:
+                return self._ssh.sftp.put(src, dst)
         else:
-            src_fo = self._ssh.sftp.open(src, "rb")
-        if isinstance(dst, self.Local):
-            dst_fo = open(dst, "wb")
-        else:
-            dst_fo = self._ssh.sftp.open(dst, "wb")
-        return self.copyfileobj(src_fo, dst_fo)
+            return self._ssh.sftp.get(src, dst)
 
     @functools.wraps(shutil.copymode)
     @_auto_remote

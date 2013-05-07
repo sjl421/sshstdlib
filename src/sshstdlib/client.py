@@ -147,16 +147,22 @@ class Client(object):
             """
         shell = False
         env = None
+        escape = True
         if "shell" in kwargs:
             shell = kwargs.pop("shell")
         if "env" in kwargs:
             env = kwargs.pop("env")
+        if "escape" in kwargs:
+            escape = kwargs.pop("escape")
 
         if len(kwargs) > 0:
             raise TypeError("Popen() got unexpected keyword argument '%s'" 
                             % (kwargs.keys()[0], ))
         
-        cmd = subprocess.list2cmdline((cmd, ) + args)
+        if escape:
+            cmd = subprocess.list2cmdline((cmd, ) + args)
+        else:
+            cmd = "%s %s" % (cmd, " ".join(args))
         marker = None
         if shell:
             marker = "__sshstdlib start__"
