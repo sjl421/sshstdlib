@@ -22,8 +22,10 @@ class RemotePython(object):
         try:
             tempfile = self._ssh.check_call("tempfile", silent=True).strip()
         except sshstdlib.client.CalledProcessError:
+            tempfile = ""
+        if tempfile.strip() == "":
             tempfile = self._ssh.check_call(
-                self._executable, 
+                self._executable,
                 "-c", "import tempfile; _, p = tempfile.mkstemp(); print p").strip()
         self._ssh.check_call("/bin/cat", ">", tempfile, stdin=client_code, shell=True)
         return self._ssh.Popen(self._executable, "-u", tempfile, "remove_source")
